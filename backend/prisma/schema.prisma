@@ -1,0 +1,282 @@
+// Prisma Schema for Memecoin Trading Backend
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core token information
+model Token {
+  id              String   @id @default(cuid())
+  address         String   @unique
+  symbol          String
+  name            String
+  decimals        Int
+  chain           String   @default("solana")
+
+  // Token metadata
+  description     String?
+  logoUrl         String?
+  website         String?
+  twitter         String?
+  telegram        String?
+
+  // Market data
+  marketCap       Float?
+  totalSupply     BigInt?
+  circulatingSupply BigInt?
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  launchDate      DateTime?
+
+  // Relationships
+  priceData       PriceData[]
+  safetyScores    SafetyScore[]
+  tradingSignals  TradingSignal[]
+  trades          Trade[]
+
+  @@map("tokens")
+  @@index([address])
+  @@index([chain])
+  @@index([marketCap])
+  @@index([createdAt])
+}
+
+// Price and volume data
+model PriceData {
+  id              String   @id @default(cuid())
+  tokenId         String
+  token           Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  // Price information
+  price           Float
+  priceChange1h   Float?
+  priceChange24h  Float?
+  priceChange7d   Float?
+
+  // Volume information
+  volume24h       Float?
+  volumeChange24h Float?
+
+  // Liquidity information
+  liquidity       Float?
+  liquidityChange24h Float?
+
+  // Market metrics
+  marketCap       Float?
+  fdv             Float?   // Fully Diluted Valuation
+
+  // Data source
+  source          String   // dexscreener, gmgn, geckoterminal, etc.
+
+  // Timestamp
+  timestamp       DateTime @default(now())
+
+  @@map("price_data")
+  @@index([tokenId])
+  @@index([timestamp])
+  @@index([source])
+  @@unique([tokenId, source, timestamp])
+}
+
+// Token safety and risk assessment
+model SafetyScore {
+  id              String   @id @default(cuid())
+  tokenId         String
+  token           Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  // Overall safety metrics
+  overallScore    Float    // 0-10 scale
+  riskLevel       RiskLevel
+
+  // Individual safety factors
+  liquidityScore  Float?   // 0-10
+  holderScore     Float?   // 0-10
+  contractScore   Float?   // 0-10
+  teamScore       Float?   // 0-10
+  socialScore     Float?   // 0-10
+
+  // Specific risk flags
+  isHoneypot      Boolean  @default(false)
+  hasRenounced    Boolean  @default(false)
+  hasLiquidity    Boolean  @default(false)
+  hasVerifiedContract Boolean @default(false)
+
+  // Holder analysis
+  holderCount     Int?
+  topHolderPercent Float?
+
+  // Contract analysis
+  contractAge     Int?     // Days since contract creation
+  mintAuthority   Boolean? // For Solana tokens
+  freezeAuthority Boolean? // For Solana tokens
+
+  // Data source and timestamp
+  source          String
+  analyzedAt      DateTime @default(now())
+
+  @@map("safety_scores")
+  @@index([tokenId])
+  @@index([overallScore])
+  @@index([riskLevel])
+  @@index([analyzedAt])
+}
+
+// Trading signals and recommendations
+model TradingSignal {
+  id              String   @id @default(cuid())
+  tokenId         String
+  token           Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  // Signal information
+  signalType      SignalType
+  strength        Float    // 0-1 scale
+  confidence      Float    // 0-1 scale
+
+  // Trading recommendation
+  action          TradeAction
+  entryPrice      Float?
+  targetPrice     Float?
+  stopLoss        Float?
+
+  // Signal rationale
+  indicators      String[] // Array of technical indicators
+  reasoning       String?
+
+  // Validity and status
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime?
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("trading_signals")
+  @@index([tokenId])
+  @@index([signalType])
+  @@index([action])
+  @@index([createdAt])
+  @@index([isActive])
+}
+
+// Actual trades executed
+model Trade {
+  id              String   @id @default(cuid())
+  tokenId         String
+  token           Token    @relation(fields: [tokenId], references: [id])
+
+  // Trade details
+  action          TradeAction
+  amount          Float    // Amount in tokens
+  price           Float    // Price per token
+  totalValue      Float    // Total trade value in USD
+
+  // Execution details
+  status          TradeStatus
+  executedAt      DateTime?
+
+  // P&L tracking
+  entryPrice      Float?
+  exitPrice       Float?
+  pnl             Float?   // Profit/Loss in USD
+  pnlPercentage   Float?   // P&L as percentage
+
+  // Trade metadata
+  strategyUsed    String?
+  signalId        String?  // Reference to trading signal
+  notes           String?
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("trades")
+  @@index([tokenId])
+  @@index([action])
+  @@index([status])
+  @@index([executedAt])
+  @@index([createdAt])
+}
+
+// API usage tracking and rate limiting
+model ApiUsage {
+  id              String   @id @default(cuid())
+
+  // API details
+  provider        String   // dexscreener, gmgn, etc.
+  endpoint        String
+  method          String   @default("GET")
+
+  // Usage metrics
+  requestCount    Int      @default(1)
+  responseTime    Int?     // Response time in milliseconds
+  statusCode      Int?
+
+  // Rate limiting
+  rateLimitHit    Boolean  @default(false)
+  resetTime       DateTime?
+
+  // Timestamp
+  timestamp       DateTime @default(now())
+  hour            String   // YYYY-MM-DD-HH for hourly aggregation
+
+  @@map("api_usage")
+  @@index([provider])
+  @@index([endpoint])
+  @@index([timestamp])
+  @@index([hour])
+  @@unique([provider, endpoint, hour])
+}
+
+// System configuration and settings
+model SystemConfig {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  value           String
+  description     String?
+  category        String?
+
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("system_config")
+  @@index([category])
+}
+
+// Enums
+enum RiskLevel {
+  VERY_LOW
+  LOW
+  MEDIUM
+  HIGH
+  VERY_HIGH
+}
+
+enum SignalType {
+  MOMENTUM
+  REVERSAL
+  BREAKOUT
+  VOLUME_SPIKE
+  SAFETY_ALERT
+  FUNDAMENTAL
+}
+
+enum TradeAction {
+  BUY
+  SELL
+  HOLD
+}
+
+enum TradeStatus {
+  PENDING
+  EXECUTING
+  EXECUTED
+  CANCELLED
+  FAILED
+}

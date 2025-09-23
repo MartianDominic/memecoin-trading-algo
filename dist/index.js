@@ -1,0 +1,143 @@
+"use strict";
+/**
+ * Main Entry Point for Memecoin Trading Algorithm
+ * Orchestrates all services and components
+ */
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MemecoinTradingSystem = void 0;
+const dotenv_1 = __importDefault(require("dotenv"));
+const logger_1 = require("./utils/logger");
+const database_config_1 = require("./config/database.config");
+const token_aggregator_service_1 = require("./services/token-aggregator.service");
+const dexscreener_service_1 = require("./services/dexscreener.service");
+const rugcheck_service_1 = require("./services/rugcheck.service");
+const jupiter_service_1 = require("./services/jupiter.service");
+const solscan_service_1 = require("./services/solscan.service");
+const health_check_service_1 = require("./services/health-check.service");
+// Load environment variables
+dotenv_1.default.config();
+class MemecoinTradingSystem {
+    constructor() {
+        this.logger = logger_1.Logger.getInstance();
+        this.dbManager = database_config_1.DatabaseManager.getInstance();
+        this.logger.info('Initializing Memecoin Trading Algorithm System');
+        // Initialize API services
+        const dexScreenerService = new dexscreener_service_1.DexScreenerService();
+        const rugCheckService = new rugcheck_service_1.RugCheckService();
+        const jupiterService = new jupiter_service_1.JupiterService();
+        const solscanService = new solscan_service_1.SolscanService();
+        // Initialize aggregator with all services
+        this.aggregatorService = new token_aggregator_service_1.TokenAggregatorService(dexScreenerService, rugCheckService, jupiterService, solscanService);
+        // Initialize health check service
+        this.healthService = new health_check_service_1.HealthCheckService([
+            dexScreenerService,
+            rugCheckService,
+            jupiterService,
+            solscanService
+        ]);
+        this.setupEventHandlers();
+    }
+    setupEventHandlers() {
+        // Set up aggregator event handlers
+        this.aggregatorService.on('token:discovered', (token) => {
+            this.logger.info(`New token discovered: ${token.symbol} (${token.address})`);
+        });
+        this.aggregatorService.on('token:passed', (analysis) => {
+            this.logger.info(`🎯 High-quality token found: ${analysis.address} (Score: ${analysis.overallScore}/100)`);
+        });
+        this.aggregatorService.on('pipeline:error', (error) => {
+            this.logger.error('Pipeline error:', error);
+        });
+        this.aggregatorService.on('stats:updated', (stats) => {
+            this.logger.info(`Pipeline stats - Processed: ${stats.processed}, Passed: ${stats.passed}, Failed: ${stats.failed}`);
+        });
+        // Process termination handlers
+        process.on('SIGINT', () => this.shutdown('SIGINT'));
+        process.on('SIGTERM', () => this.shutdown('SIGTERM'));
+        process.on('uncaughtException', (error) => {
+            this.logger.error('Uncaught exception:', error);
+            this.shutdown('UNCAUGHT_EXCEPTION');
+        });
+        process.on('unhandledRejection', (reason, promise) => {
+            this.logger.error('Unhandled rejection at:', promise, 'reason:', reason);
+        });
+    }
+    async start() {
+        try {
+            this.logger.info('Starting Memecoin Trading Algorithm System...');
+            // Check system health
+            this.logger.info('Running health checks...');
+            const healthStatus = await this.dbManager.healthCheck();
+            if (!healthStatus.postgres) {
+                throw new Error('Database connection failed');
+            }
+            if (!healthStatus.redis) {
+                this.logger.warn('Redis connection failed - caching will be limited');
+            }
+            // Check external API health
+            const apiHealth = await this.healthService.checkAllServices();
+            this.logger.info('API Health Status:', apiHealth);
+            // Start the token aggregation service
+            this.logger.info('Starting token aggregation service...');
+            await this.aggregatorService.start();
+            this.logger.info('🚀 Memecoin Trading Algorithm System is now running!');
+            this.logger.info('📊 Token discovery and analysis will run every 5 minutes');
+            this.logger.info('🎯 High-quality tokens will be automatically identified and logged');
+            // Log system configuration
+            this.logSystemConfiguration();
+        }
+        catch (error) {
+            this.logger.error('Failed to start system:', error);
+            process.exit(1);
+        }
+    }
+    logSystemConfiguration() {
+        this.logger.info('System Configuration:');
+        this.logger.info(`- Environment: ${process.env.NODE_ENV || 'development'}`);
+        this.logger.info(`- Database: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
+        this.logger.info(`- Redis: ${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+        this.logger.info('- Filter Criteria:');
+        this.logger.info('  • Age: <24h, >30min');
+        this.logger.info('  • Liquidity: >$5k');
+        this.logger.info('  • Volume: >$1k');
+        this.logger.info('  • Safety: ≥6/10, no honeypot');
+        this.logger.info('  • Routing: exists, <10% slippage on $500');
+        this.logger.info('  • Creator: <3 rugs, top 3 holders <60%');
+    }
+    async shutdown(signal) {
+        this.logger.info(`Received ${signal}. Shutting down gracefully...`);
+        try {
+            // Stop the aggregation service
+            if (this.aggregatorService) {
+                await this.aggregatorService.stop();
+                this.logger.info('Token aggregation service stopped');
+            }
+            // Close database connections
+            await this.dbManager.close();
+            this.logger.info('Database connections closed');
+            this.logger.info('Shutdown complete');
+            process.exit(0);
+        }
+        catch (error) {
+            this.logger.error('Error during shutdown:', error);
+            process.exit(1);
+        }
+    }
+}
+exports.MemecoinTradingSystem = MemecoinTradingSystem;
+// Main execution
+async function main() {
+    const system = new MemecoinTradingSystem();
+    await system.start();
+}
+// Start the system
+if (require.main === module) {
+    main().catch((error) => {
+        console.error('Failed to start system:', error);
+        process.exit(1);
+    });
+}
+//# sourceMappingURL=index.js.map

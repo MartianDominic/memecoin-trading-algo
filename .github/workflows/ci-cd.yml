@@ -1,0 +1,487 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18'
+  POSTGRES_VERSION: '15'
+
+jobs:
+  # ============================================================================
+  # TESTING JOBS
+  # ============================================================================
+
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup test environment
+        run: |
+          cp .env.example .env.test
+          echo "DATABASE_URL=postgresql://test_user:test_password@localhost:5432/test_db" >> .env.test
+          echo "NODE_ENV=test" >> .env.test
+
+      - name: Run database migrations
+        run: npm run db:migrate:test
+
+      - name: Run unit tests
+        run: npm run test:backend:unit
+
+      - name: Run integration tests
+        run: npm run test:backend:integration
+
+      - name: Upload backend coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/backend/lcov.info
+          flags: backend
+          name: backend-coverage
+
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend unit tests
+        run: npm run test:frontend:unit
+
+      - name: Run component tests
+        run: npm run test:frontend:components
+
+      - name: Upload frontend coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/frontend/lcov.info
+          flags: frontend
+          name: frontend-coverage
+
+  test-e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Setup test environment
+        run: |
+          cp .env.example .env.test
+          echo "DATABASE_URL=postgresql://test_user:test_password@localhost:5432/test_db" >> .env.test
+          echo "NODE_ENV=test" >> .env.test
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start application
+        run: |
+          npm run start:test &
+          sleep 30
+          curl --retry 10 --retry-delay 5 http://localhost:3000/health
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload E2E test artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+  # ============================================================================
+  # QUALITY ASSURANCE JOBS
+  # ============================================================================
+
+  lint-and-type-check:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier check
+        run: npm run format:check
+
+      - name: Type check backend
+        run: npm run typecheck:backend
+
+      - name: Type check frontend
+        run: npm run typecheck:frontend
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=medium
+
+      - name: Upload Snyk results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+
+  performance-test:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [test-backend]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup test environment
+        run: |
+          cp .env.example .env.test
+          echo "DATABASE_URL=postgresql://test_user:test_password@localhost:5432/test_db" >> .env.test
+          echo "NODE_ENV=test" >> .env.test
+
+      - name: Build and start application
+        run: |
+          npm run build
+          npm run start:test &
+          sleep 30
+
+      - name: Run performance tests
+        run: npm run test:performance
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: performance-results.json
+          retention-days: 30
+
+  # ============================================================================
+  # BUILD AND DEPLOY JOBS
+  # ============================================================================
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, lint-and-type-check]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build backend
+        run: npm run build:backend
+
+      - name: Build frontend
+        run: npm run build:frontend
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            build/
+          retention-days: 7
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, test-e2e, performance-test]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add actual deployment commands here
+          # e.g., Docker build/push, Kubernetes deployment, etc.
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests on staging..."
+          # Add smoke test commands here
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, test-e2e, performance-test]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Add actual deployment commands here
+
+      - name: Run post-deployment tests
+        run: |
+          echo "Running post-deployment verification..."
+          # Add verification commands here
+
+  # ============================================================================
+  # MONITORING AND NOTIFICATIONS
+  # ============================================================================
+
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-coverage'
+
+      - name: Generate combined coverage report
+        run: |
+          npm ci
+          npm run coverage:combine
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: coverage-summary.md
+
+  notify-on-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, test-e2e, security-audit, performance-test]
+    if: failure()
+
+    steps:
+      - name: Notify Slack on failure
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#ci-cd-alerts'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+
+  # ============================================================================
+  # SCHEDULED MAINTENANCE JOBS
+  # ============================================================================
+
+  dependency-update:
+    name: Dependency Update Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Check for dependency updates
+        run: |
+          npm outdated > outdated.txt || true
+          if [ -s outdated.txt ]; then
+            echo "Dependencies need updating"
+            cat outdated.txt
+          else
+            echo "All dependencies are up to date"
+          fi
+
+      - name: Create dependency update issue
+        if: hashFiles('outdated.txt') != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const outdated = fs.readFileSync('outdated.txt', 'utf8');
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Dependency Updates Available',
+              body: `Automated dependency check found updates available:\n\n\`\`\`\n${outdated}\n\`\`\``,
+              labels: ['dependencies', 'maintenance']
+            });
+
+  performance-baseline:
+    name: Performance Baseline Update
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run performance baseline tests
+        run: |
+          echo "Running weekly performance baseline..."
+          # Add performance baseline update logic here
+
+      - name: Update performance metrics
+        run: |
+          echo "Updating performance metrics..."
+          # Add metrics update logic here
