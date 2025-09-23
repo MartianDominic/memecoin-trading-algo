@@ -26,7 +26,11 @@
     "db:migrate": "psql -h $DB_HOST -p $DB_PORT -U $DB_USERNAME -d $DB_NAME -f src/database/migrations/001_initial_schema.sql",
     "db:seed": "node dist/database/seed.js",
     "health": "curl http://localhost:3000/health",
-    "logs": "tail -f logs/app.log"
+    "logs": "tail -f logs/app.log",
+    "hook:monitor": "node scripts/hook-error-recovery.js monitor",
+    "hook:test": "node scripts/hook-error-recovery.js test",
+    "hook:stats": "node scripts/hook-error-recovery.js stats",
+    "hook:install": "./scripts/install-hook-recovery.sh"
   },
   "keywords": [
     "memecoin",

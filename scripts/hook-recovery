@@ -1,0 +1,5 @@
+#!/bin/bash
+# Hook Recovery Wrapper Script
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+node "$SCRIPT_DIR/hook-error-recovery.js" "$@"

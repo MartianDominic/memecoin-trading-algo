@@ -1,0 +1,43 @@
+{
+  "autoRecover": true,
+  "maxRetries": 3,
+  "retryDelay": 1000,
+  "watchInterval": 500,
+  "logFile": "../logs/hook-errors.log",
+  "recoveryLogFile": "../logs/hook-recovery.log",
+  "enabledErrorTypes": [
+    "incomplete_tool_result",
+    "hook_timeout",
+    "api_error_400"
+  ],
+  "hookIntegration": {
+    "enabled": true,
+    "claudeFlowPath": "npx claude-flow@alpha",
+    "sessionPath": ".claude-flow/session.json",
+    "triggerPath": ".claude-flow/recovery-trigger.json"
+  },
+  "monitoring": {
+    "watchStdin": true,
+    "watchLogFiles": [
+      "/tmp/claude-code.log",
+      ".claude/logs/hooks.log",
+      ".claude-flow/logs/execution.log"
+    ],
+    "realTimeProcessing": true
+  },
+  "recovery": {
+    "methods": [
+      "claude_flow_hooks",
+      "session_injection",
+      "trigger_completion"
+    ],
+    "fallbackBehavior": "log_only",
+    "notifyOnRecovery": true
+  },
+  "logging": {
+    "level": "info",
+    "maxLogSize": "10MB",
+    "keepLogs": 7,
+    "includeStackTrace": true
+  }
+}
