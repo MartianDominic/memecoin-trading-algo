@@ -48,8 +48,11 @@ beforeEach(() => {
 
 // Cleanup after each test
 afterEach(() => {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
+  // Only clean up timers if fake timers are active
+  if (jest.isMockFunction(setTimeout)) {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  }
 });
 
 // Enhanced matchers
