@@ -369,15 +369,65 @@ class TokenAggregatorService extends events_1.EventEmitter {
         this.stats.successRate = (this.stats.tokensPassed / this.stats.tokensProcessed) * 100;
     }
     /**
-     * Store token analyses in database (placeholder)
+     * Store token analyses in database
      */
     async storeTokenAnalyses(analyses) {
         try {
-            // TODO: Implement actual database storage
-            // This would integrate with Prisma/database layer
+            const { PrismaClient } = await Promise.resolve().then(() => __importStar(require('@prisma/client')));
+            const prisma = new PrismaClient();
             for (const analysis of analyses) {
-                // Simulate database storage
-                await new Promise(resolve => setTimeout(resolve, 10));
+                await prisma.$transaction(async (tx) => {
+                    // Upsert token with latest data
+                    const token = await tx.token.upsert({
+                        where: { address: analysis.address },
+                        update: {
+                            symbol: analysis.symbol,
+                            name: analysis.name,
+                            price: analysis.currentPrice,
+                            marketCap: analysis.marketCap,
+                            volume24h: analysis.volume24h,
+                            liquidity: analysis.liquidity,
+                            rugScore: analysis.rugScore,
+                            safetyScore: analysis.safetyScore,
+                            overallScore: analysis.overallScore,
+                            updatedAt: new Date()
+                        },
+                        create: {
+                            address: analysis.address,
+                            symbol: analysis.symbol,
+                            name: analysis.name,
+                            decimals: analysis.decimals || 9,
+                            price: analysis.currentPrice,
+                            marketCap: analysis.marketCap,
+                            volume24h: analysis.volume24h,
+                            liquidity: analysis.liquidity,
+                            rugScore: analysis.rugScore,
+                            safetyScore: analysis.safetyScore,
+                            overallScore: analysis.overallScore,
+                            chain: 'solana'
+                        }
+                    });
+                    // Store price snapshot
+                    await tx.priceData.create({
+                        data: {
+                            tokenId: token.id,
+                            price: analysis.currentPrice,
+                            change24h: analysis.priceChange24h,
+                            volume: analysis.volume24h
+                        }
+                    });
+                    // Store safety assessment
+                    await tx.safetyScore.create({
+                        data: {
+                            tokenId: token.id,
+                            rugScore: analysis.rugScore || 0,
+                            liquidityScore: analysis.liquidityScore || 0,
+                            ownershipScore: analysis.holderScore || 0,
+                            overallScore: analysis.safetyScore || 0
+                        }
+                    });
+                });
+                this.emit('token:stored', analysis);
                 this.emit('token:stored', analysis);
             }
             this.logger.info(`Stored ${analyses.length} token analyses in database`);

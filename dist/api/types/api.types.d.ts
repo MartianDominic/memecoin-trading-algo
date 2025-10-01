@@ -235,7 +235,7 @@ export declare const tokenListQuerySchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     page: number;
     limit: number;
-    sortBy: "volume24h" | "marketCap" | "priceChange24h" | "createdAt";
+    sortBy: "volume24h" | "marketCap" | "createdAt" | "priceChange24h";
     sortOrder: "asc" | "desc";
     search?: string | undefined;
     chain?: string | undefined;
@@ -252,7 +252,7 @@ export declare const tokenListQuerySchema: z.ZodObject<{
     minMarketCap?: number | undefined;
     maxMarketCap?: number | undefined;
     minVolume?: number | undefined;
-    sortBy?: "volume24h" | "marketCap" | "priceChange24h" | "createdAt" | undefined;
+    sortBy?: "volume24h" | "marketCap" | "createdAt" | "priceChange24h" | undefined;
     sortOrder?: "asc" | "desc" | undefined;
     riskLevel?: ("VERY_LOW" | "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH")[] | undefined;
     hasLiquidity?: boolean | undefined;
@@ -360,14 +360,14 @@ export declare const createFilterSchema: z.ZodObject<{
             max?: number | undefined;
             min?: number | undefined;
         } | undefined;
+        marketCap?: {
+            max?: number | undefined;
+            min?: number | undefined;
+        } | undefined;
         signals?: {
             types?: string[] | undefined;
             minStrength?: number | undefined;
             minConfidence?: number | undefined;
-        } | undefined;
-        marketCap?: {
-            max?: number | undefined;
-            min?: number | undefined;
         } | undefined;
         riskLevel?: ("VERY_LOW" | "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH")[] | undefined;
         priceChange?: {
@@ -396,14 +396,14 @@ export declare const createFilterSchema: z.ZodObject<{
             max?: number | undefined;
             min?: number | undefined;
         } | undefined;
+        marketCap?: {
+            max?: number | undefined;
+            min?: number | undefined;
+        } | undefined;
         signals?: {
             types?: string[] | undefined;
             minStrength?: number | undefined;
             minConfidence?: number | undefined;
-        } | undefined;
-        marketCap?: {
-            max?: number | undefined;
-            min?: number | undefined;
         } | undefined;
         riskLevel?: ("VERY_LOW" | "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH")[] | undefined;
         priceChange?: {
@@ -436,14 +436,14 @@ export declare const createFilterSchema: z.ZodObject<{
             max?: number | undefined;
             min?: number | undefined;
         } | undefined;
+        marketCap?: {
+            max?: number | undefined;
+            min?: number | undefined;
+        } | undefined;
         signals?: {
             types?: string[] | undefined;
             minStrength?: number | undefined;
             minConfidence?: number | undefined;
-        } | undefined;
-        marketCap?: {
-            max?: number | undefined;
-            min?: number | undefined;
         } | undefined;
         riskLevel?: ("VERY_LOW" | "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH")[] | undefined;
         priceChange?: {
@@ -477,14 +477,14 @@ export declare const createFilterSchema: z.ZodObject<{
             max?: number | undefined;
             min?: number | undefined;
         } | undefined;
+        marketCap?: {
+            max?: number | undefined;
+            min?: number | undefined;
+        } | undefined;
         signals?: {
             types?: string[] | undefined;
             minStrength?: number | undefined;
             minConfidence?: number | undefined;
-        } | undefined;
-        marketCap?: {
-            max?: number | undefined;
-            min?: number | undefined;
         } | undefined;
         riskLevel?: ("VERY_LOW" | "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH")[] | undefined;
         priceChange?: {

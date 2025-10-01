@@ -99,7 +99,7 @@ export declare class TokenAggregatorService extends EventEmitter {
      */
     private handleTokenAnalysisComplete;
     /**
-     * Store token analyses in database (placeholder)
+     * Store token analyses in database
      */
     private storeTokenAnalyses;
     /**
