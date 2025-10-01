@@ -205,17 +205,17 @@ export class ErrorPatternRegistry {
     return Array.from(this.patterns.entries()).filter(([, pattern]) => pattern.severity === severity);
   }
 
-  private extractValue(text: string, extractor?: RegExp): string | null {
-    if (!extractor) return null;
+  private extractValue(text: string, extractor?: RegExp): string | undefined {
+    if (!extractor) return undefined;
 
     const match = text.match(extractor);
-    return match ? match[0] : null;
+    return match ? match[0] : undefined;
   }
 
-  private extractAllValues(text: string, extractors?: Record<string, RegExp>): Record<string, string | null> {
+  private extractAllValues(text: string, extractors?: Record<string, RegExp>): Record<string, string | undefined> {
     if (!extractors) return {};
 
-    const result: Record<string, string | null> = {};
+    const result: Record<string, string | undefined> = {};
     for (const [key, extractor] of Object.entries(extractors)) {
       result[key] = this.extractValue(text, extractor);
     }

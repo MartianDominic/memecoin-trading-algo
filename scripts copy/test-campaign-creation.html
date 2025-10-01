@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Creation Test with Comprehensive Logging</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .section {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .test-button {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-weight: 500;
+        }
+        .test-button:hover {
+            background: #15803d;
+        }
+        .test-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .log-container {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        .info { color: #3b82f6; }
+        .file-input {
+            margin: 10px 0;
+            padding: 10px;
+            border: 2px dashed #d1d5db;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .result-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .result-box h4 {
+            margin: 0 0 10px 0;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Campaign Creation Test Suite</h1>
+            <p>Comprehensive logging for campaign creation, lead upload, message upload, and variable pulling</p>
+        </div>
+
+        <div class="section">
+            <h3>📋 Test Controls</h3>
+            <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            <button class="test-button" onclick="testCampaignCreation()">Test Campaign Creation</button>
+            <button class="test-button" onclick="testFileUpload()">Test File Upload</button>
+            <button class="test-button" onclick="testMessageUpload()">Test Message Upload</button>
+            <button class="test-button" onclick="testVariablePulling()">Test Variable Pulling</button>
+            <button class="test-button" onclick="clearLogs()">Clear Logs</button>
+
+            <div class="file-input">
+                <input type="file" id="csvFile" accept=".csv" style="display: none;" onchange="handleFileSelection(this)">
+                <label for="csvFile" style="cursor: pointer;">
+                    📁 Select CSV File for Testing (click here)
+                </label>
+                <div id="fileInfo" style="margin-top: 10px; font-size: 14px; color: #6b7280;"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📊 Real-Time Logs</h3>
+            <div id="logContainer" class="log-container">
+                🚀 Test suite initialized. Click buttons above to start testing...\n
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📈 Test Results</h3>
+            <div class="results">
+                <div class="result-box">
+                    <h4>🗃️ Database Status</h4>
+                    <div id="dbStatus">Not tested yet</div>
+                </div>
+                <div class="result-box">
+                    <h4>📝 Campaign Creation</h4>
+                    <div id="campaignStatus">Not tested yet</div>
+                </div>
+                <div class="result-box">
+                    <h4>📤 File Upload</h4>
+                    <div id="uploadStatus">Not tested yet</div>
+                </div>
+                <div class="result-box">
+                    <h4>🔗 Variable Extraction</h4>
+                    <div id="variableStatus">Not tested yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Supabase client (using same config as the app)
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2.38.4';
+
+        // Configuration - matches src/config/supabase.ts centralized config
+        const SUPABASE_PROJECT_REF = 'kzbogtdwgsadmlkzxxpa'; // From src/config/supabase.ts
+        const SUPABASE_URL = `https://${SUPABASE_PROJECT_REF}.supabase.co`;
+        const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6Ym9ndGR3Z3NhZG1sa3p4eHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwMTc3OTYsImV4cCI6MjA3MzU5Mzc5Nn0.CkWH5UC7tJlpn7DPA-XwtTIaPqMCzFOytYcCSlYVUtg";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+        // Global variables
+        let selectedFile = null;
+        let parsedCSVData = null;
+
+        // Campaign Logger (simplified version for testing)
+        class TestCampaignLogger {
+            constructor() {
+                this.logs = [];
+            }
+
+            log(level, message, context = {}, data = {}) {
+                const timestamp = new Date().toISOString();
+                const logEntry = {
+                    timestamp,
+                    level,
+                    message,
+                    context,
+                    data
+                };
+
+                this.logs.push(logEntry);
+                this.displayLog(logEntry);
+            }
+
+            info(message, context, data) { this.log('info', message, context, data); }
+            warn(message, context, data) { this.log('warn', message, context, data); }
+            error(message, context, data) { this.log('error', message, context, data); }
+            debug(message, context, data) { this.log('debug', message, context, data); }
+
+            displayLog(logEntry) {
+                const container = document.getElementById('logContainer');
+                const time = new Date(logEntry.timestamp).toLocaleTimeString();
+                const levelColor = {
+                    info: 'info',
+                    warn: 'warning',
+                    error: 'error',
+                    debug: 'info'
+                }[logEntry.level];
+
+                let logLine = `[${time}] `;
+                logLine += `<span class="${levelColor}">[${logEntry.level.toUpperCase()}]</span> `;
+                logLine += `${logEntry.message}`;
+
+                if (Object.keys(logEntry.context).length > 0) {
+                    logLine += ` | Context: ${JSON.stringify(logEntry.context)}`;
+                }
+
+                if (Object.keys(logEntry.data).length > 0) {
+                    logLine += ` | Data: ${JSON.stringify(logEntry.data, null, 2)}`;
+                }
+
+                container.innerHTML += logLine + '\\n';
+                container.scrollTop = container.scrollHeight;
+            }
+
+            clearLogs() {
+                this.logs = [];
+                document.getElementById('logContainer').innerHTML = '🚀 Logs cleared. Ready for new tests...\\n';
+            }
+
+            exportLogs() {
+                return JSON.stringify(this.logs, null, 2);
+            }
+        }
+
+        // Initialize logger
+        const campaignLogger = new TestCampaignLogger();
+
+        // Make functions globally available
+        window.testDatabaseConnection = async function() {
+            campaignLogger.info('🔌 Starting database connection test', { operation: 'db_connection_test' });
+
+            try {
+                // Test basic connection
+                const { data: campaigns, error: campaignsError } = await supabase
+                    .from('campaigns')
+                    .select('id, name, user_id, created_at')
+                    .limit(5);
+
+                if (campaignsError) {
+                    campaignLogger.error('❌ Database connection failed', { operation: 'db_connection_test' }, {
+                        error: campaignsError.message,
+                        code: campaignsError.code
+                    });
+                    document.getElementById('dbStatus').innerHTML = '<span style="color: #ef4444;">Failed: ' + campaignsError.message + '</span>';
+                    return;
+                }
+
+                campaignLogger.info('✅ Database connection successful', { operation: 'db_connection_test' }, {
+                    campaignCount: campaigns.length,
+                    campaigns: campaigns
+                });
+
+                // Test revision system
+                campaignLogger.info('🔧 Testing revision system functions', { operation: 'revision_system_test' });
+
+                const { data: hasRevisions, error: hasError } = await supabase.rpc('campaign_has_revisions', {
+                    p_campaign_id: '00000000-0000-0000-0000-000000000000'
+                });
+
+                if (hasError) {
+                    campaignLogger.warn('⚠️ Revision system not ready', { operation: 'revision_system_test' }, {
+                        error: hasError.message,
+                        code: hasError.code
+                    });
+                } else {
+                    campaignLogger.info('✅ Revision system functional', { operation: 'revision_system_test' }, {
+                        hasRevisions
+                    });
+                }
+
+                // Test leads table structure
+                const { data: leads, error: leadsError } = await supabase
+                    .from('leads')
+                    .select('id, is_current, revision_id')
+                    .limit(1);
+
+                if (leadsError) {
+                    campaignLogger.warn('⚠️ Leads table missing revision columns', { operation: 'leads_schema_test' }, {
+                        error: leadsError.message
+                    });
+                } else {
+                    campaignLogger.info('✅ Leads table schema ready', { operation: 'leads_schema_test' });
+                }
+
+                document.getElementById('dbStatus').innerHTML = '<span style="color: #10b981;">Connected - ' + campaigns.length + ' campaigns found</span>';
+
+            } catch (error) {
+                campaignLogger.error('💥 Database test failed with exception', { operation: 'db_connection_test' }, {
+                    error: error.message,
+                    stack: error.stack
+                });
+                document.getElementById('dbStatus').innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+            }
+        };
+
+        window.testCampaignCreation = async function() {
+            campaignLogger.info('🏗️ Starting campaign creation test', { operation: 'campaign_creation_test' });
+
+            const testCampaign = {
+                name: 'Test Campaign ' + Date.now(),
+                description: 'Test campaign created for logging demonstration',
+                account_id: null,
+                daily_limit: 50,
+                status: 'draft',
+                wizard_current_step: 0,
+                is_wizard_draft: true
+            };
+
+            try {
+                campaignLogger.info('📝 Creating new campaign', { operation: 'campaign_create' }, testCampaign);
+
+                const { data: campaign, error: createError } = await supabase
+                    .from('campaigns')
+                    .insert([testCampaign])
+                    .select()
+                    .single();
+
+                if (createError) {
+                    campaignLogger.error('❌ Campaign creation failed', { operation: 'campaign_create' }, {
+                        error: createError.message,
+                        code: createError.code,
+                        details: createError.details
+                    });
+                    document.getElementById('campaignStatus').innerHTML = '<span style="color: #ef4444;">Failed: ' + createError.message + '</span>';
+                    return;
+                }
+
+                campaignLogger.info('✅ Campaign created successfully', { operation: 'campaign_create' }, {
+                    campaignId: campaign.id,
+                    campaign
+                });
+
+                // Test revision system creation
+                campaignLogger.info('🔄 Testing revision system for new campaign', { operation: 'revision_create' });
+
+                const { data: revisionId, error: revisionError } = await supabase.rpc('create_initial_campaign_revision', {
+                    p_campaign_id: campaign.id
+                });
+
+                if (revisionError) {
+                    campaignLogger.warn('⚠️ Revision creation failed (expected if migration not applied)', { operation: 'revision_create' }, {
+                        error: revisionError.message,
+                        campaignId: campaign.id
+                    });
+                } else {
+                    campaignLogger.info('✅ Initial revision created', { operation: 'revision_create' }, {
+                        revisionId,
+                        campaignId: campaign.id
+                    });
+                }
+
+                document.getElementById('campaignStatus').innerHTML = '<span style="color: #10b981;">Success - Campaign ID: ' + campaign.id + '</span>';
+
+            } catch (error) {
+                campaignLogger.error('💥 Campaign creation test failed with exception', { operation: 'campaign_creation_test' }, {
+                    error: error.message,
+                    stack: error.stack
+                });
+                document.getElementById('campaignStatus').innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+            }
+        };
+
+        window.handleFileSelection = function(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            selectedFile = file;
+            document.getElementById('fileInfo').innerHTML =
+                `Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+
+            campaignLogger.info('📁 File selected for testing', { operation: 'file_selection' }, {
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type,
+                lastModified: file.lastModified
+            });
+        };
+
+        window.testFileUpload = async function() {
+            if (!selectedFile) {
+                campaignLogger.warn('⚠️ No file selected for upload test', { operation: 'file_upload_test' });
+                document.getElementById('uploadStatus').innerHTML = '<span style="color: #f59e0b;">No file selected</span>';
+                return;
+            }
+
+            campaignLogger.info('📤 Starting file upload test', { operation: 'file_upload_test' });
+
+            try {
+                // Read and parse the file
+                campaignLogger.info('📖 Reading file contents', { operation: 'file_read' });
+
+                const text = await selectedFile.text();
+                const lines = text.split('\\n').filter(line => line.trim());
+
+                campaignLogger.info('✅ File read successfully', { operation: 'file_read' }, {
+                    fileName: selectedFile.name,
+                    totalLines: lines.length,
+                    fileSize: selectedFile.size
+                });
+
+                if (lines.length < 2) {
+                    campaignLogger.warn('⚠️ File has insufficient data', { operation: 'file_validation' }, {
+                        lineCount: lines.length
+                    });
+                    document.getElementById('uploadStatus').innerHTML = '<span style="color: #f59e0b;">File too short</span>';
+                    return;
+                }
+
+                // Parse CSV
+                campaignLogger.info('🔧 Parsing CSV data', { operation: 'csv_parse' });
+
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                const rows = lines.slice(1).map(line =>
+                    line.split(',').map(cell => cell.trim().replace(/"/g, ''))
+                );
+
+                parsedCSVData = { headers, rows, fileName: selectedFile.name };
+
+                campaignLogger.info('✅ CSV parsed successfully', { operation: 'csv_parse' }, {
+                    headers,
+                    rowCount: rows.length,
+                    sampleRow: rows[0]
+                });
+
+                document.getElementById('uploadStatus').innerHTML =
+                    `<span style="color: #10b981;">Success - ${rows.length} rows, ${headers.length} columns</span>`;
+
+            } catch (error) {
+                campaignLogger.error('💥 File upload test failed', { operation: 'file_upload_test' }, {
+                    error: error.message,
+                    fileName: selectedFile?.name
+                });
+                document.getElementById('uploadStatus').innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+            }
+        };
+
+        window.testMessageUpload = async function() {
+            campaignLogger.info('💬 Starting message upload test', { operation: 'message_upload_test' });
+
+            const testMessages = [
+                {
+                    content: "Hi {{first_name}}! I loved your recent post about {{topic}}. Would love to connect!",
+                    variables: ["first_name", "topic"],
+                    delay_days: 0
+                },
+                {
+                    content: "Following up on my previous message {{first_name}}. Still interested in {{topic}}?",
+                    variables: ["first_name", "topic"],
+                    delay_days: 3
+                }
+            ];
+
+            try {
+                // Get a test campaign first
+                const { data: campaigns } = await supabase
+                    .from('campaigns')
+                    .select('id')
+                    .limit(1);
+
+                if (!campaigns || campaigns.length === 0) {
+                    campaignLogger.warn('⚠️ No campaigns available for message test', { operation: 'message_upload_test' });
+                    document.getElementById('variableStatus').innerHTML = '<span style="color: #f59e0b;">No campaigns found</span>';
+                    return;
+                }
+
+                const campaignId = campaigns[0].id;
+                campaignLogger.info('📝 Creating test messages', { operation: 'message_create' }, {
+                    campaignId,
+                    messageCount: testMessages.length
+                });
+
+                for (let i = 0; i < testMessages.length; i++) {
+                    const message = { ...testMessages[i], campaign_id: campaignId };
+
+                    const { data: createdMessage, error } = await supabase
+                        .from('message_templates')
+                        .insert([message])
+                        .select()
+                        .single();
+
+                    if (error) {
+                        campaignLogger.error('❌ Message creation failed', { operation: 'message_create' }, {
+                            error: error.message,
+                            messageIndex: i
+                        });
+                    } else {
+                        campaignLogger.info('✅ Message created successfully', { operation: 'message_create' }, {
+                            messageId: createdMessage.id,
+                            variables: createdMessage.variables
+                        });
+                    }
+                }
+
+                document.getElementById('variableStatus').innerHTML = '<span style="color: #10b981;">Messages uploaded successfully</span>';
+
+            } catch (error) {
+                campaignLogger.error('💥 Message upload test failed', { operation: 'message_upload_test' }, {
+                    error: error.message
+                });
+                document.getElementById('variableStatus').innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+            }
+        };
+
+        window.testVariablePulling = async function() {
+            campaignLogger.info('🔗 Starting variable pulling test', { operation: 'variable_pulling_test' });
+
+            if (!parsedCSVData) {
+                campaignLogger.warn('⚠️ No CSV data available for variable extraction', { operation: 'variable_pulling_test' });
+                document.getElementById('variableStatus').innerHTML = '<span style="color: #f59e0b;">No CSV data loaded</span>';
+                return;
+            }
+
+            try {
+                // Extract variables from CSV headers
+                campaignLogger.info('🔍 Analyzing CSV headers for variables', { operation: 'variable_extraction' });
+
+                const detectedVariables = [];
+                const headerMapping = {};
+
+                parsedCSVData.headers.forEach(header => {
+                    const lowerHeader = header.toLowerCase();
+                    let variableName = header.toLowerCase().replace(/\\s+/g, '_');
+
+                    // Auto-detect common patterns
+                    if (lowerHeader.includes('first') && lowerHeader.includes('name')) {
+                        variableName = 'first_name';
+                        detectedVariables.push('first_name');
+                    } else if (lowerHeader.includes('last') && lowerHeader.includes('name')) {
+                        variableName = 'last_name';
+                        detectedVariables.push('last_name');
+                    } else if (lowerHeader.includes('username') || lowerHeader.includes('instagram')) {
+                        variableName = 'username';
+                        detectedVariables.push('username');
+                    } else if (lowerHeader.includes('email')) {
+                        variableName = 'email';
+                        detectedVariables.push('email');
+                    } else if (lowerHeader.includes('city') || lowerHeader.includes('location')) {
+                        variableName = 'city';
+                        detectedVariables.push('city');
+                    } else {
+                        detectedVariables.push(variableName);
+                    }
+
+                    headerMapping[header] = variableName;
+                });
+
+                campaignLogger.info('✅ Variables detected successfully', { operation: 'variable_extraction' }, {
+                    totalHeaders: parsedCSVData.headers.length,
+                    detectedVariables,
+                    headerMapping
+                });
+
+                // Generate sample data with variables
+                const sampleData = parsedCSVData.rows.slice(0, 3).map((row, index) => {
+                    const mappedRow = {};
+                    parsedCSVData.headers.forEach((header, headerIndex) => {
+                        const variableName = headerMapping[header];
+                        mappedRow[variableName] = row[headerIndex] || '';
+                    });
+                    return mappedRow;
+                });
+
+                campaignLogger.info('📊 Sample data generated with variables', { operation: 'variable_mapping' }, {
+                    sampleCount: sampleData.length,
+                    sampleData
+                });
+
+                // Test variable replacement in message templates
+                const testTemplate = "Hi {{first_name}}! I saw your post about {{topic}}. I'm from {{city}} too!";
+                const variablesInTemplate = testTemplate.match(/\\{\\{([^}]+)\\}\\}/g);
+
+                if (variablesInTemplate) {
+                    campaignLogger.info('🔄 Testing variable replacement', { operation: 'variable_replacement' }, {
+                        template: testTemplate,
+                        variablesFound: variablesInTemplate
+                    });
+
+                    const processedTemplates = sampleData.map((data, index) => {
+                        let processed = testTemplate;
+                        Object.keys(data).forEach(key => {
+                            const placeholder = `{{${key}}}`;
+                            processed = processed.replace(new RegExp(placeholder, 'g'), data[key] || `[${key}]`);
+                        });
+                        return { leadIndex: index, processed, originalData: data };
+                    });
+
+                    campaignLogger.info('✅ Variable replacement successful', { operation: 'variable_replacement' }, {
+                        processedTemplates
+                    });
+                }
+
+                document.getElementById('variableStatus').innerHTML =
+                    `<span style="color: #10b981;">Success - ${detectedVariables.length} variables detected</span>`;
+
+            } catch (error) {
+                campaignLogger.error('💥 Variable pulling test failed', { operation: 'variable_pulling_test' }, {
+                    error: error.message
+                });
+                document.getElementById('variableStatus').innerHTML = '<span style="color: #ef4444;">Error: ' + error.message + '</span>';
+            }
+        };
+
+        window.clearLogs = function() {
+            campaignLogger.clearLogs();
+            // Reset status displays
+            document.getElementById('dbStatus').innerHTML = 'Not tested yet';
+            document.getElementById('campaignStatus').innerHTML = 'Not tested yet';
+            document.getElementById('uploadStatus').innerHTML = 'Not tested yet';
+            document.getElementById('variableStatus').innerHTML = 'Not tested yet';
+        };
+
+        // Auto-run database test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(window.testDatabaseConnection, 1000);
+        });
+    </script>
+</body>
+</html>

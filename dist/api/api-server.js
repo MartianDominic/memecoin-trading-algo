@@ -12,6 +12,9 @@ const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const client_1 = require("@prisma/client");
+const logger_1 = require("../utils/logger");
+// Create logger instance
+const logger = logger_1.Logger.getInstance();
 // Import controllers
 const tokens_controller_1 = require("./controllers/tokens.controller");
 const filters_controller_1 = require("./controllers/filters.controller");
@@ -152,12 +155,12 @@ class ApiServer {
                 });
             }
             catch (error) {
-                logger.error('Health check failed:', error);
+                logger.error('Health check failed:', { error: error instanceof Error ? error.message : String(error) });
                 res.status(503).json({
                     status: 'unhealthy',
                     timestamp: new Date().toISOString(),
                     error: 'Service unavailable',
-                    details: process.env.NODE_ENV === 'development' ? error : undefined
+                    details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
                 });
             }
         });
@@ -199,7 +202,7 @@ class ApiServer {
                     this.wsManager.handleMessage(clientId, message);
                 }
                 catch (error) {
-                    logger.error('Invalid WebSocket message:', error);
+                    logger.error('Invalid WebSocket message:', { error: error instanceof Error ? error.message : String(error) });
                     ws.send(JSON.stringify({
                         type: 'error',
                         message: 'Invalid message format',
@@ -212,7 +215,7 @@ class ApiServer {
                 logger.info(`WebSocket client disconnected: ${clientId}`);
             });
             ws.on('error', (error) => {
-                logger.error(`WebSocket error for client ${clientId}:`, error);
+                logger.error(`WebSocket error for client ${clientId}:`, { error: error instanceof Error ? error.message : String(error) });
                 this.wsManager.handleDisconnection(clientId);
             });
             // Send welcome message
@@ -267,7 +270,7 @@ class ApiServer {
             process.on('SIGINT', () => this.gracefulShutdown('SIGINT'));
         }
         catch (error) {
-            logger.error('Failed to start API server:', error);
+            logger.error('Failed to start API server:', { error: error instanceof Error ? error.message : String(error) });
             process.exit(1);
         }
     }

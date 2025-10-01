@@ -1,7 +1,7 @@
 /**
  * Blockchain Service - Multi-chain token data fetching
  */
-import { TokenData, TokenMetrics, TokenSecurity } from '../types/token.types';
+import { TokenData, TokenMetrics, TokenSecurity } from '../types/tokens';
 export interface BlockchainAPIConfig {
     etherscan: string;
     bscscan: string;

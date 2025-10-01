@@ -2,7 +2,10 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { logger } from '../../backend/src/config/logger';
+import { Logger } from '../../utils/logger';
+
+// Create logger instance
+const logger = Logger.getInstance();
 import {
   ApiResponse,
   DashboardSummary,
@@ -103,7 +106,7 @@ export class AnalyticsController {
         return;
       }
 
-      logger.error('Error fetching dashboard summary:', error);
+      logger.error('Error fetching dashboard summary:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,
@@ -183,7 +186,7 @@ export class AnalyticsController {
       });
 
     } catch (error) {
-      logger.error('Error fetching market metrics:', error);
+      logger.error('Error fetching market metrics:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,
@@ -220,7 +223,7 @@ export class AnalyticsController {
       });
 
     } catch (error) {
-      logger.error('Error fetching performance metrics:', error);
+      logger.error('Error fetching performance metrics:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,
@@ -256,7 +259,7 @@ export class AnalyticsController {
       });
 
     } catch (error) {
-      logger.error('Error fetching trends:', error);
+      logger.error('Error fetching trends:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,

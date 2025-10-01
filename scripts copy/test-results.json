@@ -1,0 +1,194 @@
+{
+  "timestamp": "2025-09-21T19:13:26.026Z",
+  "testResults": {
+    "databaseConnection": true,
+    "campaignCreation": true,
+    "leadUpload": false,
+    "messageUpload": false,
+    "variablePulling": false,
+    "campaignEditing": false
+  },
+  "logs": [
+    {
+      "timestamp": "2025-09-21T19:12:52.158Z",
+      "level": "info",
+      "message": "🎬 Starting comprehensive campaign flow test",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:12:52.160Z",
+      "level": "info",
+      "message": "🚀 Setting up browser for campaign flow testing",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:12:53.220Z",
+      "level": "success",
+      "message": "✅ Browser setup complete",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:12:53.221Z",
+      "level": "info",
+      "message": "🔌 Testing direct database connection",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:12:53.806Z",
+      "level": "success",
+      "message": "✅ Database connection successful",
+      "data": {
+        "campaignCount": 0,
+        "campaigns": []
+      }
+    },
+    {
+      "timestamp": "2025-09-21T19:12:53.806Z",
+      "level": "info",
+      "message": "🌐 Navigating to application",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:06.053Z",
+      "level": "info",
+      "message": "📍 Current URL: http://localhost:8080/",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:06.089Z",
+      "level": "success",
+      "message": "✅ Application loaded",
+      "data": {
+        "title": "InfraDM - Instagram DM Automation Platform",
+        "url": "http://localhost:8080/"
+      }
+    },
+    {
+      "timestamp": "2025-09-21T19:13:06.090Z",
+      "level": "info",
+      "message": "📝 Testing campaign creation flow",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:09.641Z",
+      "level": "info",
+      "message": "📍 Navigated to campaign creation page",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:15.041Z",
+      "level": "info",
+      "message": "🔐 Redirected to auth, looking for Test Campaign button",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:15.077Z",
+      "level": "info",
+      "message": "🧪 Clicking Test Campaign button",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.106Z",
+      "level": "success",
+      "message": "✅ Campaign logger is available",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.119Z",
+      "level": "success",
+      "message": "✅ Found campaign form with selector: form",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.302Z",
+      "level": "info",
+      "message": "📤 Testing lead upload functionality",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.303Z",
+      "level": "warn",
+      "message": "⚠️  File input not found, looking for upload areas",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.306Z",
+      "level": "info",
+      "message": "Found 0 potential upload areas",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.306Z",
+      "level": "info",
+      "message": "💬 Testing message creation functionality",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.310Z",
+      "level": "info",
+      "message": "Found 0 potential message inputs",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.310Z",
+      "level": "info",
+      "message": "🎯 Testing campaign finalization",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.313Z",
+      "level": "info",
+      "message": "Found 0 potential create buttons",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.314Z",
+      "level": "info",
+      "message": "✏️  Testing campaign editing flow",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.604Z",
+      "level": "warn",
+      "message": "⚠️  No campaigns exist to test editing",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.604Z",
+      "level": "info",
+      "message": "📊 Capturing application logs",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.609Z",
+      "level": "warn",
+      "message": "⚠️  No campaign logger data found",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.610Z",
+      "level": "info",
+      "message": "Window availability check:",
+      "data": {
+        "hasCampaignLogger": true,
+        "windowKeys": [
+          "campaignLogger"
+        ],
+        "hasReact": false,
+        "hasReactDOM": false
+      }
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.610Z",
+      "level": "info",
+      "message": "📋 Test Summary",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T19:13:25.611Z",
+      "level": "info",
+      "message": "🧹 Cleaning up test environment",
+      "data": {}
+    }
+  ]
+}

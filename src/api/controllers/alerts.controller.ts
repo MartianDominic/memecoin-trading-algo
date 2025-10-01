@@ -2,7 +2,10 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { logger } from '../../backend/src/config/logger';
+import { Logger } from '../../utils/logger';
+
+// Create logger instance
+const logger = Logger.getInstance();
 import { WebSocketManager } from '../websocket/websocket-manager';
 import {
   ApiResponse,
@@ -169,7 +172,7 @@ export class AlertsController {
         return;
       }
 
-      logger.error('Error fetching alerts:', error);
+      logger.error('Error fetching alerts:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,
@@ -213,7 +216,7 @@ export class AlertsController {
       });
 
     } catch (error) {
-      logger.error('Error fetching alert:', error);
+      logger.error('Error fetching alert:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,
@@ -295,7 +298,7 @@ export class AlertsController {
         return;
       }
 
-      logger.error('Error creating alert:', error);
+      logger.error('Error creating alert:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,
@@ -344,7 +347,7 @@ export class AlertsController {
       });
 
     } catch (error) {
-      logger.error('Error acknowledging alert:', error);
+      logger.error('Error acknowledging alert:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,
@@ -400,7 +403,7 @@ export class AlertsController {
       });
 
     } catch (error) {
-      logger.error('Error dismissing alert:', error);
+      logger.error('Error dismissing alert:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,
@@ -449,7 +452,7 @@ export class AlertsController {
       logger.info('Alert summary retrieved successfully');
 
     } catch (error) {
-      logger.error('Error fetching alert summary:', error);
+      logger.error('Error fetching alert summary:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({
         success: false,
         error: API_ERROR_CODES.INTERNAL_ERROR,
@@ -501,7 +504,7 @@ export class AlertsController {
         }
       }
     } catch (error) {
-      logger.error('Error triggering alerts:', error);
+      logger.error('Error triggering alerts:', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 

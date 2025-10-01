@@ -90,7 +90,7 @@ export class TokenAnalysisService {
       // Calculate overall score and determine pass/fail
       const analysis = this.buildCombinedAnalysis(
         tokenAddress,
-        dexData,
+        dexData || null,
         rugData,
         jupiterData,
         solscanData,

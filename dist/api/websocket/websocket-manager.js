@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebSocketManager = void 0;
 // WebSocket Manager - Real-time Broadcasting and Connection Management
 const ws_1 = require("ws");
-const logger_1 = require("../../backend/src/config/logger");
 class WebSocketManager {
     constructor(wss, prisma) {
         this.wss = wss;
@@ -13,7 +12,7 @@ class WebSocketManager {
         this.HEARTBEAT_INTERVAL = 30000; // 30 seconds
         this.CONNECTION_TIMEOUT = 60000; // 60 seconds
         this.startHeartbeat();
-        logger_1.logger.info('WebSocket Manager initialized');
+        logger.info('WebSocket Manager initialized');
     }
     handleConnection(ws, req) {
         const clientId = this.generateClientId();
@@ -38,7 +37,7 @@ class WebSocketManager {
                 this.handleMessage(clientId, message);
             }
             catch (error) {
-                logger_1.logger.error('Invalid WebSocket message format:', error);
+                logger.error('Invalid WebSocket message format:', error);
                 this.sendError(clientId, 'Invalid message format');
             }
         });
@@ -46,7 +45,7 @@ class WebSocketManager {
             this.handleDisconnection(clientId);
         });
         ws.on('error', (error) => {
-            logger_1.logger.error(`WebSocket error for client ${clientId}:`, error);
+            logger.error(`WebSocket error for client ${clientId}:`, error);
             this.handleDisconnection(clientId);
         });
         // Send welcome message
@@ -59,7 +58,7 @@ class WebSocketManager {
             },
             timestamp: new Date().toISOString()
         });
-        logger_1.logger.info('WebSocket client connected', {
+        logger.info('WebSocket client connected', {
             clientId,
             ip,
             userAgent: userAgent?.substring(0, 100)
@@ -69,7 +68,7 @@ class WebSocketManager {
     handleMessage(clientId, message) {
         const client = this.clients.get(clientId);
         if (!client) {
-            logger_1.logger.warn('Message from unknown client:', clientId);
+            logger.warn('Message from unknown client:', clientId);
             return;
         }
         switch (message.type) {
@@ -83,7 +82,7 @@ class WebSocketManager {
                 this.handlePing(clientId);
                 break;
             default:
-                logger_1.logger.warn('Unknown message type:', message);
+                logger.warn('Unknown message type:', message);
                 this.sendError(clientId, 'Unknown message type');
         }
     }
@@ -103,7 +102,7 @@ class WebSocketManager {
         });
         // Remove client
         this.clients.delete(clientId);
-        logger_1.logger.info('WebSocket client disconnected', {
+        logger.info('WebSocket client disconnected', {
             clientId,
             connectionDuration: Date.now() - client.metadata.connectedAt.getTime()
         });
@@ -180,7 +179,7 @@ class WebSocketManager {
                 client.ws.close(1000, 'Server shutdown');
             }
             catch (error) {
-                logger_1.logger.error(`Error closing connection for client ${clientId}:`, error);
+                logger.error(`Error closing connection for client ${clientId}:`, error);
             }
         });
         this.clients.clear();
@@ -188,7 +187,7 @@ class WebSocketManager {
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
         }
-        logger_1.logger.info('All WebSocket connections closed');
+        logger.info('All WebSocket connections closed');
     }
     handleSubscription(clientId, channels, filters) {
         const client = this.clients.get(clientId);
@@ -211,7 +210,7 @@ class WebSocketManager {
             },
             timestamp: new Date().toISOString()
         });
-        logger_1.logger.info('Client subscribed to channels', {
+        logger.info('Client subscribed to channels', {
             clientId,
             channels: validChannels
         });
@@ -237,7 +236,7 @@ class WebSocketManager {
             },
             timestamp: new Date().toISOString()
         });
-        logger_1.logger.info('Client unsubscribed from channels', {
+        logger.info('Client unsubscribed from channels', {
             clientId,
             channels
         });
@@ -269,7 +268,7 @@ class WebSocketManager {
                     sentCount++;
                 }
                 catch (error) {
-                    logger_1.logger.error(`Failed to send message to client ${clientId}:`, error);
+                    logger.error(`Failed to send message to client ${clientId}:`, error);
                     failedCount++;
                     this.handleDisconnection(clientId);
                 }
@@ -281,7 +280,7 @@ class WebSocketManager {
             }
         });
         if (sentCount > 0) {
-            logger_1.logger.debug('Broadcast message sent', {
+            logger.debug('Broadcast message sent', {
                 channel,
                 messageType: message.type,
                 recipients: sentCount,
@@ -298,7 +297,7 @@ class WebSocketManager {
             client.ws.send(JSON.stringify(message));
         }
         catch (error) {
-            logger_1.logger.error(`Failed to send message to client ${clientId}:`, error);
+            logger.error(`Failed to send message to client ${clientId}:`, error);
             this.handleDisconnection(clientId);
         }
     }
@@ -352,7 +351,7 @@ class WebSocketManager {
                         client.ws.ping();
                     }
                     catch (error) {
-                        logger_1.logger.error(`Failed to ping client ${clientId}:`, error);
+                        logger.error(`Failed to ping client ${clientId}:`, error);
                         deadClients.push(clientId);
                     }
                 }
@@ -362,7 +361,7 @@ class WebSocketManager {
                 this.handleDisconnection(clientId);
             });
             if (deadClients.length > 0) {
-                logger_1.logger.info('Cleaned up dead WebSocket connections', {
+                logger.info('Cleaned up dead WebSocket connections', {
                     count: deadClients.length
                 });
             }

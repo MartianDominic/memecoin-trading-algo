@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AlertsController = void 0;
 const zod_1 = require("zod");
-const logger_1 = require("../../backend/src/config/logger");
+const logger_1 = require("../../utils/logger");
+// Create logger instance
+const logger = logger_1.Logger.getInstance();
 const api_types_1 = require("../types/api.types");
 // In-memory alert storage (in production, use database)
 class AlertStorage {
@@ -97,7 +99,7 @@ class AlertsController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Alerts retrieved successfully', {
+            logger.info('Alerts retrieved successfully', {
                 count: paginatedAlerts.length,
                 total,
                 filters: query
@@ -115,7 +117,7 @@ class AlertsController {
                 });
                 return;
             }
-            logger_1.logger.error('Error fetching alerts:', error);
+            logger.error('Error fetching alerts:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -147,13 +149,13 @@ class AlertsController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Alert retrieved successfully', {
+            logger.info('Alert retrieved successfully', {
                 alertId: id,
                 type: alert.type
             });
         }
         catch (error) {
-            logger_1.logger.error('Error fetching alert:', error);
+            logger.error('Error fetching alert:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -194,7 +196,7 @@ class AlertsController {
                     }
                 }
                 catch (error) {
-                    logger_1.logger.warn('Failed to resolve token symbol:', error);
+                    logger.warn('Failed to resolve token symbol:', error);
                 }
             }
             this.alertStorage.createAlert(alert);
@@ -209,7 +211,7 @@ class AlertsController {
                 version: '1.0.0'
             };
             res.status(201).json(response);
-            logger_1.logger.info('Alert created successfully', {
+            logger.info('Alert created successfully', {
                 alertId: alert.id,
                 type: alert.type,
                 tokenAddress: alert.tokenAddress
@@ -227,7 +229,7 @@ class AlertsController {
                 });
                 return;
             }
-            logger_1.logger.error('Error creating alert:', error);
+            logger.error('Error creating alert:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -264,12 +266,12 @@ class AlertsController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Alert acknowledged successfully', {
+            logger.info('Alert acknowledged successfully', {
                 alertId: id
             });
         }
         catch (error) {
-            logger_1.logger.error('Error acknowledging alert:', error);
+            logger.error('Error acknowledging alert:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -312,12 +314,12 @@ class AlertsController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Alert dismissed successfully', {
+            logger.info('Alert dismissed successfully', {
                 alertId: id
             });
         }
         catch (error) {
-            logger_1.logger.error('Error dismissing alert:', error);
+            logger.error('Error dismissing alert:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -358,10 +360,10 @@ class AlertsController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Alert summary retrieved successfully');
+            logger.info('Alert summary retrieved successfully');
         }
         catch (error) {
-            logger_1.logger.error('Error fetching alert summary:', error);
+            logger.error('Error fetching alert summary:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -398,7 +400,7 @@ class AlertsController {
                         };
                         this.alertStorage.createAlert(alert);
                         this.wsManager.broadcastAlert(alert);
-                        logger_1.logger.info('Alert triggered automatically', {
+                        logger.info('Alert triggered automatically', {
                             alertId: alert.id,
                             tokenAddress,
                             metric,
@@ -409,7 +411,7 @@ class AlertsController {
             }
         }
         catch (error) {
-            logger_1.logger.error('Error triggering alerts:', error);
+            logger.error('Error triggering alerts:', { error: error instanceof Error ? error.message : String(error) });
         }
     }
     evaluateCondition(condition, value) {
@@ -507,7 +509,7 @@ class AlertsController {
         sampleAlerts.forEach(alert => {
             this.alertStorage.createAlert(alert);
         });
-        logger_1.logger.info('Sample alerts initialized', { count: sampleAlerts.length });
+        logger.info('Sample alerts initialized', { count: sampleAlerts.length });
     }
 }
 exports.AlertsController = AlertsController;

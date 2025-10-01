@@ -360,6 +360,11 @@ export declare const createFilterSchema: z.ZodObject<{
             max?: number | undefined;
             min?: number | undefined;
         } | undefined;
+        signals?: {
+            types?: string[] | undefined;
+            minStrength?: number | undefined;
+            minConfidence?: number | undefined;
+        } | undefined;
         marketCap?: {
             max?: number | undefined;
             min?: number | undefined;
@@ -376,11 +381,6 @@ export declare const createFilterSchema: z.ZodObject<{
         } | undefined;
         contractAge?: {
             minDays?: number | undefined;
-        } | undefined;
-        signals?: {
-            types?: string[] | undefined;
-            minStrength?: number | undefined;
-            minConfidence?: number | undefined;
         } | undefined;
     }, {
         chain?: string[] | undefined;
@@ -396,6 +396,11 @@ export declare const createFilterSchema: z.ZodObject<{
             max?: number | undefined;
             min?: number | undefined;
         } | undefined;
+        signals?: {
+            types?: string[] | undefined;
+            minStrength?: number | undefined;
+            minConfidence?: number | undefined;
+        } | undefined;
         marketCap?: {
             max?: number | undefined;
             min?: number | undefined;
@@ -412,11 +417,6 @@ export declare const createFilterSchema: z.ZodObject<{
         } | undefined;
         contractAge?: {
             minDays?: number | undefined;
-        } | undefined;
-        signals?: {
-            types?: string[] | undefined;
-            minStrength?: number | undefined;
-            minConfidence?: number | undefined;
         } | undefined;
     }>;
     isPublic: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
@@ -436,6 +436,11 @@ export declare const createFilterSchema: z.ZodObject<{
             max?: number | undefined;
             min?: number | undefined;
         } | undefined;
+        signals?: {
+            types?: string[] | undefined;
+            minStrength?: number | undefined;
+            minConfidence?: number | undefined;
+        } | undefined;
         marketCap?: {
             max?: number | undefined;
             min?: number | undefined;
@@ -452,11 +457,6 @@ export declare const createFilterSchema: z.ZodObject<{
         } | undefined;
         contractAge?: {
             minDays?: number | undefined;
-        } | undefined;
-        signals?: {
-            types?: string[] | undefined;
-            minStrength?: number | undefined;
-            minConfidence?: number | undefined;
         } | undefined;
     };
     isPublic: boolean;
@@ -477,6 +477,11 @@ export declare const createFilterSchema: z.ZodObject<{
             max?: number | undefined;
             min?: number | undefined;
         } | undefined;
+        signals?: {
+            types?: string[] | undefined;
+            minStrength?: number | undefined;
+            minConfidence?: number | undefined;
+        } | undefined;
         marketCap?: {
             max?: number | undefined;
             min?: number | undefined;
@@ -494,11 +499,6 @@ export declare const createFilterSchema: z.ZodObject<{
         contractAge?: {
             minDays?: number | undefined;
         } | undefined;
-        signals?: {
-            types?: string[] | undefined;
-            minStrength?: number | undefined;
-            minConfidence?: number | undefined;
-        } | undefined;
     };
     description?: string | undefined;
     isPublic?: boolean | undefined;
@@ -514,12 +514,12 @@ export declare const createAlertSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         value: number;
         metric: string;
-        operator: "gt" | "lt" | "gte" | "lte" | "eq";
+        operator: "lt" | "lte" | "gt" | "gte" | "eq";
         period?: string | undefined;
     }, {
         value: number;
         metric: string;
-        operator: "gt" | "lt" | "gte" | "lte" | "eq";
+        operator: "lt" | "lte" | "gt" | "gte" | "eq";
         period?: string | undefined;
     }>;
     message: z.ZodOptional<z.ZodString>;
@@ -530,7 +530,7 @@ export declare const createAlertSchema: z.ZodObject<{
     condition: {
         value: number;
         metric: string;
-        operator: "gt" | "lt" | "gte" | "lte" | "eq";
+        operator: "lt" | "lte" | "gt" | "gte" | "eq";
         period?: string | undefined;
     };
     message?: string | undefined;
@@ -540,7 +540,7 @@ export declare const createAlertSchema: z.ZodObject<{
     condition: {
         value: number;
         metric: string;
-        operator: "gt" | "lt" | "gte" | "lte" | "eq";
+        operator: "lt" | "lte" | "gt" | "gte" | "eq";
         period?: string | undefined;
     };
     message?: string | undefined;

@@ -58,11 +58,11 @@ class MemecoinTradingSystem {
         process.on('SIGINT', () => this.shutdown('SIGINT'));
         process.on('SIGTERM', () => this.shutdown('SIGTERM'));
         process.on('uncaughtException', (error) => {
-            this.logger.error('Uncaught exception:', error);
+            this.logger.error('Uncaught exception:', { message: error.message, stack: error.stack });
             this.shutdown('UNCAUGHT_EXCEPTION');
         });
         process.on('unhandledRejection', (reason, promise) => {
-            this.logger.error('Unhandled rejection at:', promise, 'reason:', reason);
+            this.logger.error('Unhandled rejection', { reason, promise: String(promise) });
         });
     }
     async start() {
@@ -79,7 +79,7 @@ class MemecoinTradingSystem {
             }
             // Check external API health
             const apiHealth = await this.healthService.checkAllServices();
-            this.logger.info('API Health Status:', apiHealth);
+            this.logger.info('API Health Status:', { status: apiHealth });
             // Start the token aggregation service
             this.logger.info('Starting token aggregation service...');
             await this.aggregatorService.start();
@@ -90,7 +90,7 @@ class MemecoinTradingSystem {
             this.logSystemConfiguration();
         }
         catch (error) {
-            this.logger.error('Failed to start system:', error);
+            this.logger.error('Failed to start system:', { error: error instanceof Error ? error.message : String(error) });
             process.exit(1);
         }
     }

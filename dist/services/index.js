@@ -69,7 +69,7 @@ class TokenAnalysisService {
                 ? solscanResult.value.data
                 : null;
             // Calculate overall score and determine pass/fail
-            const analysis = this.buildCombinedAnalysis(tokenAddress, dexData, rugData, jupiterData, solscanData, filters);
+            const analysis = this.buildCombinedAnalysis(tokenAddress, dexData || null, rugData, jupiterData, solscanData, filters);
             this.logger.info('Token analysis completed', {
                 tokenAddress,
                 overallScore: analysis.overallScore,

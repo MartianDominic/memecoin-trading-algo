@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnalyticsController = void 0;
 const zod_1 = require("zod");
-const logger_1 = require("../../backend/src/config/logger");
+const logger_1 = require("../../utils/logger");
+// Create logger instance
+const logger = logger_1.Logger.getInstance();
 const api_types_1 = require("../types/api.types");
 // Analytics query validation schema
 const analyticsQuerySchema = zod_1.z.object({
@@ -58,7 +60,7 @@ class AnalyticsController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Dashboard summary retrieved successfully', {
+            logger.info('Dashboard summary retrieved successfully', {
                 period: query.period,
                 chain: query.chain,
                 totalTokens
@@ -76,7 +78,7 @@ class AnalyticsController {
                 });
                 return;
             }
-            logger_1.logger.error('Error fetching dashboard summary:', error);
+            logger.error('Error fetching dashboard summary:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -130,13 +132,13 @@ class AnalyticsController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Market metrics retrieved successfully', {
+            logger.info('Market metrics retrieved successfully', {
                 period: query.period,
                 chain: query.chain
             });
         }
         catch (error) {
-            logger_1.logger.error('Error fetching market metrics:', error);
+            logger.error('Error fetching market metrics:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -160,14 +162,14 @@ class AnalyticsController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Performance metrics retrieved successfully', {
+            logger.info('Performance metrics retrieved successfully', {
                 period: query.period,
                 granularity: query.granularity,
                 dataPoints: performanceData.length
             });
         }
         catch (error) {
-            logger_1.logger.error('Error fetching performance metrics:', error);
+            logger.error('Error fetching performance metrics:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -191,13 +193,13 @@ class AnalyticsController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Trends data retrieved successfully', {
+            logger.info('Trends data retrieved successfully', {
                 period: query.period,
                 chain: query.chain
             });
         }
         catch (error) {
-            logger_1.logger.error('Error fetching trends:', error);
+            logger.error('Error fetching trends:', { error: error instanceof Error ? error.message : String(error) });
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,

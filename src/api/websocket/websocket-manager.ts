@@ -2,14 +2,65 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
 import { PrismaClient } from '@prisma/client';
-import { logger } from '../../backend/src/config/logger';
-import {
-  WebSocketMessage,
-  TokenUpdateMessage,
-  AlertMessage,
-  FilterResultMessage,
-  Alert
-} from '../types/api.types';
+import { Logger } from '../../utils/logger';
+// Define interfaces locally to avoid import issues
+interface WebSocketMessage {
+  type: string;
+  data?: Record<string, unknown>;
+  timestamp?: string;
+}
+
+interface TokenUpdateData {
+  address: string;
+  symbol: string;
+  price?: number;
+  volume24h?: number;
+  marketCap?: number;
+}
+
+interface TokenUpdateMessage extends WebSocketMessage {
+  type: 'token_update';
+  data: TokenUpdateData;
+}
+
+interface AlertData {
+  id: string;
+  type: string;
+  message: string;
+  severity: string;
+  tokenAddress?: string;
+}
+
+interface AlertMessage extends WebSocketMessage {
+  type: 'alert';
+  data: AlertData;
+}
+
+interface FilterResultData {
+  filterId: string;
+  results: Record<string, unknown>[];
+  totalCount: number;
+}
+
+interface FilterResultMessage extends WebSocketMessage {
+  type: 'filter_results';
+  data: FilterResultData;
+}
+
+interface AlertCondition {
+  metric: string;
+  operator: 'lt' | 'lte' | 'gt' | 'gte' | 'eq';
+  value: number;
+  period?: string;
+}
+
+interface Alert {
+  id: string;
+  type: string;
+  condition: AlertCondition;
+  isActive: boolean;
+  tokenId: string;
+}
 
 interface ClientConnection {
   id: string;

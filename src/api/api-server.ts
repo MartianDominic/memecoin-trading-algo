@@ -1,13 +1,17 @@
 // Express API Server with WebSocket Support for Memecoin Trading Dashboard
 import express from 'express';
-import { createServer } from 'http';
+import { createServer, Server } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
+import { IncomingMessage } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { PrismaClient } from '@prisma/client';
 import { Logger } from '../utils/logger';
 import { DatabaseManager } from '../config/database.config';
+
+// Create logger instance
+const logger = Logger.getInstance();
 
 // Import controllers
 import { TokensController } from './controllers/tokens.controller';
@@ -33,7 +37,7 @@ import { WebSocketManager } from './websocket/websocket-manager';
 
 export class ApiServer {
   private app: express.Application;
-  private httpServer: any;
+  private httpServer: Server;
   private wss: WebSocketServer;
   private prisma: PrismaClient;
   private wsManager: WebSocketManager;
@@ -184,12 +188,12 @@ export class ApiServer {
           }
         });
       } catch (error) {
-        logger.error('Health check failed:', error);
+        logger.error('Health check failed:', { error: error instanceof Error ? error.message : String(error) });
         res.status(503).json({
           status: 'unhealthy',
           timestamp: new Date().toISOString(),
           error: 'Service unavailable',
-          details: process.env.NODE_ENV === 'development' ? error : undefined
+          details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
         });
       }
     });
@@ -225,7 +229,7 @@ export class ApiServer {
   }
 
   private initializeWebSocket(): void {
-    this.wss.on('connection', (ws: WebSocket, req) => {
+    this.wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
       const clientId = this.wsManager.handleConnection(ws, req);
       logger.info(`WebSocket client connected: ${clientId}`);
 
@@ -234,7 +238,7 @@ export class ApiServer {
           const message = JSON.parse(data.toString());
           this.wsManager.handleMessage(clientId, message);
         } catch (error) {
-          logger.error('Invalid WebSocket message:', error);
+          logger.error('Invalid WebSocket message:', { error: error instanceof Error ? error.message : String(error) });
           ws.send(JSON.stringify({
             type: 'error',
             message: 'Invalid message format',
@@ -249,7 +253,7 @@ export class ApiServer {
       });
 
       ws.on('error', (error) => {
-        logger.error(`WebSocket error for client ${clientId}:`, error);
+        logger.error(`WebSocket error for client ${clientId}:`, { error: error instanceof Error ? error.message : String(error) });
         this.wsManager.handleDisconnection(clientId);
       });
 
@@ -313,7 +317,7 @@ export class ApiServer {
       process.on('SIGINT', () => this.gracefulShutdown('SIGINT'));
 
     } catch (error) {
-      logger.error('Failed to start API server:', error);
+      logger.error('Failed to start API server:', { error: error instanceof Error ? error.message : String(error) });
       process.exit(1);
     }
   }

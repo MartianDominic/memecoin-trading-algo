@@ -1,0 +1,212 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: memecoin_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: memecoin_trading
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_secure_password_here
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./src/database/migrations:/docker-entrypoint-initdb.d/migrations:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - memecoin_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: memecoin_redis
+    restart: unless-stopped
+    command: redis-server --requirepass your_redis_password_here --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - memecoin_network
+
+  # Main Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: memecoin_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=memecoin_trading
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=your_secure_password_here
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=your_redis_password_here
+      - DATABASE_URL=postgresql://postgres:your_secure_password_here@postgres:5432/memecoin_trading?schema=public
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "8080:8080"
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - memecoin_network
+
+  # API Server (separate instance)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: memecoin_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      - DATABASE_URL=postgresql://postgres:your_secure_password_here@postgres:5432/memecoin_trading?schema=public
+    command: npm run start:api
+    ports:
+      - "4000:3001"
+    networks:
+      - memecoin_network
+
+  # WebSocket Server
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: memecoin_websocket
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - WEBSOCKET_PORT=8080
+    command: npm run start:websocket
+    ports:
+      - "8081:8080"
+    networks:
+      - memecoin_network
+
+  # Token Aggregator Service
+  aggregator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: memecoin_aggregator
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      - DATABASE_URL=postgresql://postgres:your_secure_password_here@postgres:5432/memecoin_trading?schema=public
+    command: npm run start:aggregator
+    networks:
+      - memecoin_network
+
+  # Nginx Load Balancer (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: memecoin_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/ssl:/etc/nginx/ssl:ro
+    networks:
+      - memecoin_network
+
+  # Monitoring (optional)
+  prometheus:
+    image: prom/prometheus
+    container_name: memecoin_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - memecoin_network
+
+  grafana:
+    image: grafana/grafana
+    container_name: memecoin_grafana
+    restart: unless-stopped
+    ports:
+      - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning
+    networks:
+      - memecoin_network
+
+networks:
+  memecoin_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

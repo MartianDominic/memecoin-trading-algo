@@ -20,7 +20,8 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/tests/setup/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^@backend/(.*)$': '<rootDir>/backend/src/$1'
+    '^@backend/(.*)$': '<rootDir>/src/$1',
+    '^@src/(.*)$': '<rootDir>/src/$1'
   },
   testTimeout: 10000,
   verbose: true,

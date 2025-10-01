@@ -3,7 +3,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
-import { TokenData, TokenMetrics, TokenSecurity } from '../types/token.types';
+import { TokenData, TokenMetrics, TokenSecurity } from '../types/tokens';
 import { Logger } from '../utils/logger';
 
 export interface BlockchainAPIConfig {

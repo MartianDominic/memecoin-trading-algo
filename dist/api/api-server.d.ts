@@ -1,3 +1,6 @@
+import { Server } from 'http';
+import { IncomingMessage } from 'http';
+import { PrismaClient } from '@prisma/client';
 import { WebSocketManager } from './websocket/websocket-manager';
 export declare class ApiServer {
     private app;
@@ -16,9 +19,9 @@ export declare class ApiServer {
     private initializeErrorHandling;
     start(): Promise<void>;
     private gracefulShutdown;
-    get server(): any;
+    get server(): Server<typeof IncomingMessage, typeof import("http").ServerResponse>;
     get websocketManager(): WebSocketManager;
-    get database(): any;
+    get database(): PrismaClient<import(".prisma/client").Prisma.PrismaClientOptions, never, import("@prisma/client/runtime/library").DefaultArgs>;
 }
 export default ApiServer;
 //# sourceMappingURL=api-server.d.ts.map

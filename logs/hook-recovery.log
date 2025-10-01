@@ -1,0 +1,2 @@
+[2025-09-23T22:14:38.294Z] [RECOVERY] Generated tool_result for toolu_01TestId123: {"type":"tool_result","tool_use_id":"toolu_01TestId123","content":"{\"status\":\"error_recovered\",\"original_error\":\"API Error: 400 tool_use ids were found without tool_result blocks: toolu_01TestId123\",\"recovery_timestamp\":\"2025-09-23T22:14:38.294Z\",\"message\":\"Tool execution completed with automatic error recovery\"}","is_error":false}
+[2025-09-23T22:14:43.802Z] [RECOVERY] Recovery successful for toolu_01TestId123

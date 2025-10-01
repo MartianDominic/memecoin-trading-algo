@@ -2,7 +2,7 @@
  * Token Detection Engine - Core detection logic and algorithms
  */
 import { BlockchainService } from '../services/blockchain.service';
-import { DetectionResult, PipelineConfig } from '../types/token.types';
+import { DetectionResult, PipelineConfig } from '../types/tokens';
 import { EventEmitter } from 'events';
 export declare class TokenDetector extends EventEmitter {
     private readonly blockchainService;

@@ -3,7 +3,7 @@
  */
 
 import { BlockchainService } from '../services/blockchain.service';
-import { TokenData, TokenMetrics, TokenSecurity, DetectionResult, PipelineConfig, TokenAlert } from '../types/token.types';
+import { TokenData, TokenMetrics, TokenSecurity, DetectionResult, PipelineConfig, TokenAlert } from '../types/tokens';
 import { Logger } from '../utils/logger';
 import { CacheManager } from '../utils/cache-manager';
 import { EventEmitter } from 'events';

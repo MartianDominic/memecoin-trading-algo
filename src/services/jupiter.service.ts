@@ -236,7 +236,7 @@ export class JupiterService {
       return {
         available: true,
         routeCount: response.data.routePlan?.length || 0,
-        bestRoute: response.data as JupiterRoute
+        bestRoute: response.data as unknown as JupiterRoute
       };
 
     } catch (error) {
