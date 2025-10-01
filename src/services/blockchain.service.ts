@@ -110,7 +110,15 @@ export class BlockchainService {
       if (!pairs || pairs.length === 0) return null;
 
       // Get the most liquid pair
-      const topPair = pairs.sort((a: any, b: any) => b.liquidity?.usd - a.liquidity?.usd)[0];
+      interface DexPair {
+        liquidity?: { usd: number };
+        priceUsd?: string;
+        priceChange?: { h24?: string };
+        volume?: { h24?: string };
+        baseToken: { address: string };
+        chainId?: string;
+      }
+      const topPair = (pairs as DexPair[]).sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0];
 
       return {
         address: address.toLowerCase(),
@@ -196,10 +204,14 @@ export class BlockchainService {
       const response = await client.get(`/tokens/trending`);
       const tokens = response.data.pairs || [];
 
-      return tokens
-        .filter((pair: any) => pair.chainId === network)
+      interface TrendingPair {
+        chainId?: string;
+        baseToken: { address: string };
+      }
+      return (tokens as TrendingPair[])
+        .filter((pair) => pair.chainId === network)
         .slice(0, limit)
-        .map((pair: any) => pair.baseToken.address.toLowerCase());
+        .map((pair) => pair.baseToken.address.toLowerCase());
     } catch (error) {
       this.logger.error('Failed to fetch new tokens', { network, error });
       return [];

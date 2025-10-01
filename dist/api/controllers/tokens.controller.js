@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TokensController = void 0;
 const zod_1 = require("zod");
-const logger_1 = require("../../backend/src/config/logger");
+const logger_1 = require("../../utils/logger");
+const logger = logger_1.Logger.getInstance();
 const api_types_1 = require("../types/api.types");
 class TokensController {
     constructor(prisma, wsManager) {
@@ -151,7 +152,7 @@ class TokensController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Tokens listed successfully', {
+            logger.info('Tokens listed successfully', {
                 count: tokens.length,
                 total,
                 page: query.page,
@@ -170,7 +171,7 @@ class TokensController {
                 });
                 return;
             }
-            logger_1.logger.error('Error listing tokens:', error);
+            logger.error('Error listing tokens:', error);
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -293,13 +294,13 @@ class TokensController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Token details retrieved successfully', {
+            logger.info('Token details retrieved successfully', {
                 address,
                 symbol: token.symbol
             });
         }
         catch (error) {
-            logger_1.logger.error('Error fetching token details:', error);
+            logger.error('Error fetching token details:', error);
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -373,13 +374,13 @@ class TokensController {
                 version: '1.0.0'
             };
             res.status(201).json(response);
-            logger_1.logger.info('Token created/updated successfully', {
+            logger.info('Token created/updated successfully', {
                 address: token.address,
                 symbol: token.symbol
             });
         }
         catch (error) {
-            logger_1.logger.error('Error creating/updating token:', error);
+            logger.error('Error creating/updating token:', error);
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,

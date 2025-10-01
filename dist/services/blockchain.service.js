@@ -92,8 +92,7 @@ class BlockchainService {
             const pairs = response.data.pairs;
             if (!pairs || pairs.length === 0)
                 return null;
-            // Get the most liquid pair
-            const topPair = pairs.sort((a, b) => b.liquidity?.usd - a.liquidity?.usd)[0];
+            const topPair = pairs.sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0];
             return {
                 address: address.toLowerCase(),
                 price: parseFloat(topPair.priceUsd || '0'),

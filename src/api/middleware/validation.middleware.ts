@@ -1,7 +1,8 @@
 // Validation Middleware - Request Validation with Zod
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodSchema, ZodError } from 'zod';
-import { logger } from '../../backend/src/config/logger';
+import { Logger } from '../../utils/logger';
+const logger = Logger.getInstance();
 import { API_ERROR_CODES } from '../types/api.types';
 
 type ValidationTarget = 'body' | 'query' | 'params' | 'headers';

@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getErrorStats = exports.reportError = exports.createServiceUnavailableError = exports.createInternalError = exports.createRateLimitError = exports.createForbiddenError = exports.createUnauthorizedError = exports.createNotFoundError = exports.createValidationError = exports.notFoundHandler = exports.asyncHandler = exports.errorHandler = exports.ApiServiceUnavailableError = exports.ApiInternalError = exports.ApiRateLimitError = exports.ApiForbiddenError = exports.ApiUnauthorizedError = exports.ApiNotFoundError = exports.ApiValidationError = void 0;
-const logger_1 = require("../../backend/src/config/logger");
+const logger_1 = require("../../utils/logger");
+const logger = logger_1.Logger.getInstance();
 const api_types_1 = require("../types/api.types");
 // Custom error classes
 class ApiValidationError extends Error {
@@ -131,10 +132,10 @@ const errorHandler = (error, req, res, next) => {
         stack: error.stack
     };
     if (statusCode >= 500) {
-        logger_1.logger.error('Internal server error', logData);
+        logger.error('Internal server error', logData);
     }
     else if (statusCode >= 400) {
-        logger_1.logger.warn('Client error', {
+        logger.warn('Client error', {
             ...logData,
             stack: undefined // Don't log stack for client errors
         });
@@ -187,7 +188,7 @@ const notFoundHandler = (req, res) => {
         timestamp: new Date().toISOString(),
         version: '1.0.0'
     };
-    logger_1.logger.warn('Route not found', {
+    logger.warn('Route not found', {
         method: req.method,
         url: req.originalUrl,
         ip: req.ip,
@@ -234,7 +235,7 @@ exports.createServiceUnavailableError = createServiceUnavailableError;
 // Error reporting utilities
 const reportError = (error, context) => {
     // In production, this could send to error tracking services like Sentry
-    logger_1.logger.error('Error reported', {
+    logger.error('Error reported', {
         error: {
             name: error.name,
             message: error.message,

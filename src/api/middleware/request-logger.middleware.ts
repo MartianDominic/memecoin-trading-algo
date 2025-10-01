@@ -1,6 +1,7 @@
 // Request Logger Middleware - HTTP Request Logging and Monitoring
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../../backend/src/config/logger';
+import { Logger } from '../../utils/logger';
+const logger = Logger.getInstance();
 
 interface LoggedRequest extends Request {
   startTime?: number;

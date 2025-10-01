@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FiltersController = void 0;
 const zod_1 = require("zod");
-const logger_1 = require("../../backend/src/config/logger");
+const logger_1 = require("../../utils/logger");
+const logger = logger_1.Logger.getInstance();
 const api_types_1 = require("../types/api.types");
 // In-memory filter storage (in production, use database)
 class FilterStorage {
@@ -84,14 +85,14 @@ class FiltersController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Filters listed successfully', {
+            logger.info('Filters listed successfully', {
                 count: paginatedFilters.length,
                 total,
                 userId
             });
         }
         catch (error) {
-            logger_1.logger.error('Error listing filters:', error);
+            logger.error('Error listing filters:', error);
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -123,13 +124,13 @@ class FiltersController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Filter retrieved successfully', {
+            logger.info('Filter retrieved successfully', {
                 filterId: id,
                 name: filter.name
             });
         }
         catch (error) {
-            logger_1.logger.error('Error fetching filter:', error);
+            logger.error('Error fetching filter:', error);
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -163,7 +164,7 @@ class FiltersController {
                 version: '1.0.0'
             };
             res.status(201).json(response);
-            logger_1.logger.info('Filter created successfully', {
+            logger.info('Filter created successfully', {
                 filterId: filter.id,
                 name: filter.name,
                 userId: filter.userId
@@ -181,7 +182,7 @@ class FiltersController {
                 });
                 return;
             }
-            logger_1.logger.error('Error creating filter:', error);
+            logger.error('Error creating filter:', error);
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -228,13 +229,13 @@ class FiltersController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Filter updated successfully', {
+            logger.info('Filter updated successfully', {
                 filterId: id,
                 name: updatedFilter.name
             });
         }
         catch (error) {
-            logger_1.logger.error('Error updating filter:', error);
+            logger.error('Error updating filter:', error);
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -289,12 +290,12 @@ class FiltersController {
                 version: '1.0.0'
             };
             res.json(response);
-            logger_1.logger.info('Filter deleted successfully', {
+            logger.info('Filter deleted successfully', {
                 filterId: id
             });
         }
         catch (error) {
-            logger_1.logger.error('Error deleting filter:', error);
+            logger.error('Error deleting filter:', error);
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,
@@ -384,14 +385,14 @@ class FiltersController {
                 },
                 timestamp: new Date().toISOString()
             });
-            logger_1.logger.info('Filter executed successfully', {
+            logger.info('Filter executed successfully', {
                 filterId: id,
                 resultCount: results.length,
                 name: filter.name
             });
         }
         catch (error) {
-            logger_1.logger.error('Error executing filter:', error);
+            logger.error('Error executing filter:', error);
             res.status(500).json({
                 success: false,
                 error: api_types_1.API_ERROR_CODES.INTERNAL_ERROR,

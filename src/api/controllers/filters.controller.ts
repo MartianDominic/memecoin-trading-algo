@@ -2,7 +2,8 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { logger } from '../../backend/src/config/logger';
+import { Logger } from '../../utils/logger';
+const logger = Logger.getInstance();
 import { WebSocketManager } from '../websocket/websocket-manager';
 import {
   ApiResponse,

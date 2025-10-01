@@ -4,7 +4,8 @@ exports.requireTier = exports.requireAuth = exports.authMiddleware = void 0;
 exports.addApiKey = addApiKey;
 exports.revokeApiKey = revokeApiKey;
 exports.getApiKeyStats = getApiKeyStats;
-const logger_1 = require("../../backend/src/config/logger");
+const logger_1 = require("../../utils/logger");
+const logger = logger_1.Logger.getInstance();
 const api_types_1 = require("../types/api.types");
 // Mock API keys for development (in production, store in database)
 const API_KEYS = new Map([
@@ -37,7 +38,7 @@ const authMiddleware = (req, res, next) => {
     const apiKey = extractApiKey(req);
     if (!apiKey) {
         // API key is optional for most endpoints, but some features require authentication
-        logger_1.logger.info('Request without API key', {
+        logger.info('Request without API key', {
             path: req.path,
             method: req.method,
             ip: req.ip
@@ -46,7 +47,7 @@ const authMiddleware = (req, res, next) => {
     }
     const keyData = API_KEYS.get(apiKey);
     if (!keyData) {
-        logger_1.logger.warn('Invalid API key used', {
+        logger.warn('Invalid API key used', {
             apiKey: apiKey.substring(0, 8) + '...',
             path: req.path,
             ip: req.ip
@@ -60,7 +61,7 @@ const authMiddleware = (req, res, next) => {
         });
     }
     if (!keyData.isActive) {
-        logger_1.logger.warn('Inactive API key used', {
+        logger.warn('Inactive API key used', {
             userId: keyData.id,
             path: req.path,
             ip: req.ip
@@ -82,7 +83,7 @@ const authMiddleware = (req, res, next) => {
     };
     // Set user ID header for other middleware
     req.headers['x-user-id'] = keyData.id;
-    logger_1.logger.info('Authenticated request', {
+    logger.info('Authenticated request', {
         userId: keyData.id,
         tier: keyData.tier,
         path: req.path,
@@ -161,7 +162,7 @@ function isPublicEndpoint(path) {
 // Utility function to add new API key (for development)
 function addApiKey(apiKey, data) {
     API_KEYS.set(apiKey, data);
-    logger_1.logger.info('API key added', {
+    logger.info('API key added', {
         apiKey: apiKey.substring(0, 8) + '...',
         userId: data.id,
         tier: data.tier
@@ -172,7 +173,7 @@ function revokeApiKey(apiKey) {
     const keyData = API_KEYS.get(apiKey);
     if (keyData) {
         keyData.isActive = false;
-        logger_1.logger.info('API key revoked', {
+        logger.info('API key revoked', {
             apiKey: apiKey.substring(0, 8) + '...',
             userId: keyData.id
         });

@@ -1,6 +1,7 @@
 // Authentication Middleware - API Key and User Authentication
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../../backend/src/config/logger';
+import { Logger } from '../../utils/logger';
+const logger = Logger.getInstance();
 import { API_ERROR_CODES } from '../types/api.types';
 
 interface AuthenticatedRequest extends Request {

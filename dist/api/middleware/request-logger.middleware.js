@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.analyticsLogger = exports.rateLimitLogger = exports.securityLogger = exports.requestLogger = void 0;
-const logger_1 = require("../../backend/src/config/logger");
+const logger_1 = require("../../utils/logger");
+const logger = logger_1.Logger.getInstance();
 // Request logging middleware
 const requestLogger = (req, res, next) => {
     const startTime = Date.now();
@@ -27,7 +28,7 @@ const requestLogger = (req, res, next) => {
     };
     // Log request start (for debugging/development)
     if (process.env.NODE_ENV === 'development' && !isHealthCheck(req.path)) {
-        logger_1.logger.debug('HTTP Request Started', requestData);
+        logger.debug('HTTP Request Started', requestData);
     }
     // Override res.end to capture response data
     const originalEnd = res.end;
@@ -106,7 +107,7 @@ function logRequestCompletion(logData, responseBody) {
         })
     };
     // Log with appropriate level
-    logger_1.logger[logLevel](logMessage, logPayload);
+    logger[logLevel](logMessage, logPayload);
     // Track metrics (in production, this could send to monitoring services)
     trackRequestMetrics(logData);
 }
@@ -180,7 +181,7 @@ function trackRequestMetrics(logData) {
     };
     // Log metrics for debugging
     if (process.env.NODE_ENV === 'development') {
-        logger_1.logger.debug('Request metrics', {
+        logger.debug('Request metrics', {
             requestId: logData.requestId,
             metrics
         });
@@ -199,7 +200,7 @@ const securityLogger = (req, res, next) => {
     const userAgent = req.get('User-Agent') || '';
     const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(url) || pattern.test(userAgent) || pattern.test(JSON.stringify(req.body)));
     if (isSuspicious) {
-        logger_1.logger.warn('Suspicious request detected', {
+        logger.warn('Suspicious request detected', {
             ip: getClientIP(req),
             method: req.method,
             url,
@@ -224,7 +225,7 @@ const rateLimitLogger = (req, res, next) => {
     // Log rate limiting events (when limits are hit)
     res.on('finish', () => {
         if (res.statusCode === 429) {
-            logger_1.logger.warn('Rate limit exceeded', rateLimitInfo);
+            logger.warn('Rate limit exceeded', rateLimitInfo);
         }
     });
     next();
@@ -244,7 +245,7 @@ const analyticsLogger = (req, res, next) => {
     res.on('finish', () => {
         // Log successful API calls for analytics
         if (res.statusCode >= 200 && res.statusCode < 400) {
-            logger_1.logger.info('API Usage', {
+            logger.info('API Usage', {
                 ...usageData,
                 statusCode: res.statusCode,
                 responseTime: Date.now() - req.startTime

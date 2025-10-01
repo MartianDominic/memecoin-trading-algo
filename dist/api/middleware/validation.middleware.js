@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateWebhookSignature = exports.addRequestId = exports.validateFileSize = exports.requireJsonContent = exports.sanitizeInput = exports.validateHeaders = exports.validateParams = exports.validateBody = exports.validateQuery = exports.validateSortOptions = exports.validateTokenAddress = exports.validateDateRange = exports.validatePagination = exports.commonSchemas = exports.validate = void 0;
 const zod_1 = require("zod");
-const logger_1 = require("../../backend/src/config/logger");
+const logger_1 = require("../../utils/logger");
+const logger = logger_1.Logger.getInstance();
 const api_types_1 = require("../types/api.types");
 const validate = (schema, target = 'body', options = {}) => {
     return (req, res, next) => {
@@ -20,7 +21,7 @@ const validate = (schema, target = 'body', options = {}) => {
             const result = validationSchema.parse(data);
             // Replace the request data with validated/transformed data
             req[target] = result;
-            logger_1.logger.debug('Request validation successful', {
+            logger.debug('Request validation successful', {
                 target,
                 path: req.path,
                 method: req.method
@@ -35,7 +36,7 @@ const validate = (schema, target = 'body', options = {}) => {
                     code: err.code,
                     received: err.received
                 }));
-                logger_1.logger.warn('Request validation failed', {
+                logger.warn('Request validation failed', {
                     target,
                     path: req.path,
                     method: req.method,

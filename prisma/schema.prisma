@@ -21,6 +21,13 @@ model Token {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  // Additional fields for API compatibility
+  chain             String?   @default("solana")
+  logoUrl           String?
+  totalSupply       BigInt?
+  circulatingSupply BigInt?
+  launchDate        DateTime?
+
   // Analysis data
   rugScore          Float?
   safetyScore       Float?
@@ -38,6 +45,9 @@ model Token {
   prices            TokenPrice[]
   alerts            Alert[]
   analyses          TokenAnalysis[]
+  priceData         PriceData[]
+  safetyScores      SafetyScore[]
+  tradingSignals    TradingSignal[]
 
   @@map("tokens")
 }
@@ -124,4 +134,53 @@ model SystemMetrics {
 
   @@map("system_metrics")
   @@index([metricType, timestamp])
+}
+
+model PriceData {
+  id        String   @id @default(cuid())
+  tokenId   String
+  price     Float
+  high24h   Float?
+  low24h    Float?
+  change1h  Float?
+  change24h Float?
+  change7d  Float?
+  volume    Float?
+  timestamp DateTime @default(now())
+
+  token     Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@map("price_data")
+  @@index([tokenId, timestamp])
+}
+
+model TradingSignal {
+  id        String   @id @default(cuid())
+  tokenId   String
+  type      String
+  strength  Float
+  reason    String?
+  data      Json?
+  timestamp DateTime @default(now())
+
+  token     Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@map("trading_signals")
+  @@index([tokenId, type])
+}
+
+model SafetyScore {
+  id              String   @id @default(cuid())
+  tokenId         String
+  rugScore        Float
+  liquidityScore  Float
+  ownershipScore  Float
+  overallScore    Float
+  details         Json?
+  timestamp       DateTime @default(now())
+
+  token           Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@map("safety_scores")
+  @@index([tokenId, timestamp])
 }

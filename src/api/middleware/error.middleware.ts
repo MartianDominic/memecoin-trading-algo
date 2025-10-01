@@ -1,6 +1,7 @@
 // Error Handling Middleware - Centralized Error Management
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../../backend/src/config/logger';
+import { Logger } from '../../utils/logger';
+const logger = Logger.getInstance();
 import { API_ERROR_CODES, ApiError } from '../types/api.types';
 
 interface ErrorWithStatus extends Error {
