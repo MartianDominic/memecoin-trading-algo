@@ -429,6 +429,7 @@ class TokenAggregatorService extends events_1.EventEmitter {
                 });
                 this.emit('token:stored', analysis);
             }
+            await prisma.$disconnect();
             this.logger.info(`Stored ${analyses.length} token analyses in database`);
         }
         catch (error) {
@@ -436,7 +437,6 @@ class TokenAggregatorService extends events_1.EventEmitter {
                 error: error instanceof Error ? error.message : 'Unknown error',
                 count: analyses.length
             });
-            throw error;
         }
     }
     /**
