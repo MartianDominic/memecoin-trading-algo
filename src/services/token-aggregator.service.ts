@@ -530,8 +530,6 @@ export class TokenAggregatorService extends EventEmitter {
         });
 
         this.emit('token:stored', analysis);
-
-        this.emit('token:stored', analysis);
       }
 
       this.logger.info(`Stored ${analyses.length} token analyses in database`);
